@@ -195,7 +195,10 @@ def add_message_with_meta_orchestrator(body: MetaOrchestratorMessageRequest) -> 
             detail=bst.get("block_reason") or "Projeto inválido para onboarding.",
         )
 
-    if bst.get("needs_bootstrap"):
+    ok_ctx, _err_ctx, _ctx_path_hint = project_context_service.minimum_project_context_status(slug)
+    use_onboarding = bool(bst.get("needs_bootstrap")) or (slug == "cap" and not ok_ctx)
+
+    if use_onboarding:
         try:
             user_row = chat_service.add_message(body.chat_id, "user", body.content)
         except ValueError as e:
@@ -240,13 +243,6 @@ def add_message_with_meta_orchestrator(body: MetaOrchestratorMessageRequest) -> 
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=meta_orchestrator_service.MISSING_OPENAI_MESSAGE,
         )
-
-    ok_ctx, err_ctx, ctx_path_hint = project_context_service.minimum_project_context_status(slug)
-    if not ok_ctx:
-        detail = err_ctx or project_context_service.MINIMUM_CONTEXT_USER_MESSAGE
-        if ctx_path_hint:
-            detail += f" Arquivo esperado: `{ctx_path_hint.replace('/', os.sep)}`"
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
     try:
         user_row = chat_service.add_message(body.chat_id, "user", body.content)

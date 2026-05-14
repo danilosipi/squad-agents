@@ -38,6 +38,10 @@ except ImportError as exc:  # pragma: no cover
 import file_writer
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from core.projects import project_context_service
 
 CAP_BASE_PRISMA_PATH = (
     ROOT.parent / "cap-platform" / "repos" / "cap-base" / "prisma" / "base.prisma"
@@ -298,17 +302,6 @@ REPOSITORY_FORBIDDEN_METHOD_PATTERNS: list[tuple[str, str]] = [
     ("restore", r"\brestore\s*\("),
     ("save", r"\bsave\s*\("),
     ("upsert", r"\bupsert\s*\("),
-]
-
-CONTEXT_FILES = [
-    ROOT / "docs" / "00-fonte-oficial.md",
-    ROOT / "docs" / "01-organizacao-projetos-prioritarios.md",
-    ROOT / "projects" / "cap" / "context.md",
-    ROOT / "projects" / "cap" / "standards.md",
-    ROOT / "projects" / "cap" / "decisions.md",
-    ROOT / "projects" / "cap" / "backlog.md",
-    ROOT / "squads" / "cap" / "workflow.md",
-    ROOT / "squads" / "cap" / "task-policy.md",
 ]
 
 AGENTS: list[tuple[str, str, Path]] = [
@@ -2959,21 +2952,14 @@ def _run_write_files_repository_contracts_phase(
     return summary, build_markdown()
 
 
-def _load_context_bundle() -> dict[str, str]:
-    labels = [
-        "fonte oficial",
-        "organização dos projetos prioritários",
-        "contexto CAP",
-        "standards CAP",
-        "decisions CAP",
-        "backlog CAP",
-        "workflow da squad CAP",
-        "task-policy da squad CAP",
-    ]
-    bundle: dict[str, str] = {}
-    for label, path in zip(labels, CONTEXT_FILES, strict=True):
-        bundle[label] = _read_text(path, label)
-    return bundle
+def _load_context_bundle(project_slug: str) -> dict[str, str]:
+    try:
+        return project_context_service.build_squad_run_context_bundle(
+            project_slug,
+            repo_root=ROOT,
+        )
+    except ValueError as exc:
+        _die(str(exc))
 
 
 def _build_shared_context_block(bundle: dict[str, str]) -> str:
@@ -3114,8 +3100,9 @@ def _run_meta_orchestrator_flow(
     run_dir: Path,
     outputs_cap: Path,
     timestamp: str,
+    project: str,
 ) -> None:
-    bundle = _load_context_bundle()
+    bundle = _load_context_bundle(project)
     shared_context = _build_shared_context_block(bundle)
     agent_instructions = _read_text(META_ORCHESTRATOR_INSTRUCTIONS_PATH, "meta-orchestrator")
     user_prompt = _build_meta_orchestrator_user_prompt(
@@ -3931,10 +3918,11 @@ def main() -> None:
             run_dir=run_dir,
             outputs_cap=outputs_cap,
             timestamp=ts,
+            project=project,
         )
         return
 
-    bundle = _load_context_bundle()
+    bundle = _load_context_bundle(project)
     shared_context = _build_shared_context_block(bundle)
 
     agent_instructions: dict[str, str] = {}

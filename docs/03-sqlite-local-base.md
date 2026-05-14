@@ -22,7 +22,7 @@ Tabelas pensadas para **UX e consulta rápida**, por exemplo:
 
 ## O que continua em arquivos
 
-A **fonte oficial** permanece em Markdown/JSON no disco do projeto (e na estrutura atual de `docs/`, `projects/`, `squads/`, `runs/`, `outputs/` do repositório). O banco **não substitui** esses arquivos; apenas indexa e apoia navegação e estado na UI.
+A **fonte oficial** do contexto de cada projeto cliente fica em **`<local_path>/.squad/`** (Markdown/JSON no disco do produto). No repositório **squad-agentes**, permanecem `docs/`, `squads/`, `runs/`, `outputs/` (método e execuções). A pasta antiga `projects/<slug>/` aqui é **legado**, não fonte ativa. O banco **não substitui** esses ficheiros; apenas indexa e apoia navegação e estado na UI.
 
 ## Como inicializar
 

@@ -375,12 +375,7 @@ squad-agentes/
 │           ├── reviewer.md
 │           └── qa.md
 │
-├── projects/
-│   └── cap/
-│       ├── context.md
-│       ├── backlog.md
-│       ├── decisions.md
-│       └── standards.md
+├── (legado: projects/<slug>/ — não usar como fonte ativa; preferir <local_path>/.squad/ no repositório do cliente)
 │
 ├── outputs/
 │   └── cap/

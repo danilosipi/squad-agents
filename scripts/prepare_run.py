@@ -24,14 +24,12 @@ except ImportError as exc:  # pragma: no cover
 
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from core.projects import project_context_service
+
 AGENT_PATH = ROOT / "agents" / "meta-orchestrator.md"
-CONTEXT_FILES: list[Path] = [
-    ROOT / "docs" / "00-fonte-oficial.md",
-    ROOT / "projects" / "cap" / "context.md",
-    ROOT / "projects" / "cap" / "backlog.md",
-    ROOT / "projects" / "cap" / "decisions.md",
-    ROOT / "projects" / "cap" / "standards.md",
-]
 
 # Legado: 001-cap-base-database. Chat: 20260512-143055-slug-curto (UTC).
 RUN_SLUG_RE_LEGACY = re.compile(r"^[0-9]{3}-[a-z0-9-]+$")
@@ -58,7 +56,11 @@ def _read_text(path: Path, label: str) -> str:
 
 
 def _load_context_bundle() -> str:
-    labels = [
+    try:
+        bundle = project_context_service.build_squad_run_context_bundle("cap", repo_root=ROOT)
+    except ValueError as exc:
+        _die(str(exc))
+    order = [
         "fonte oficial",
         "contexto CAP",
         "backlog CAP",
@@ -66,8 +68,8 @@ def _load_context_bundle() -> str:
         "standards CAP",
     ]
     parts: list[str] = []
-    for label, path in zip(labels, CONTEXT_FILES, strict=True):
-        parts.append(f"## {label.upper()}\n\n{_read_text(path, label).strip()}\n")
+    for label in order:
+        parts.append(f"## {label.upper()}\n\n{bundle[label].strip()}\n")
     return "\n".join(parts)
 
 

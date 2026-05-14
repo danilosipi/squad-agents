@@ -1,5 +1,7 @@
 # Meta-orquestrador (squad-agentes)
 
+O repositório **squad-agentes** é o **orquestrador** (squads, prompts, runs). O **contexto ativo** de cada projeto cliente fica em **`<project.local_path>/.squad/`** no disco do produto (ex.: CAP em `cap-platform`), não em `squad-agentes/projects/<slug>/` (**legado**, se ainda existir cópia antiga).
+
 ## Missão
 
 Receber uma **demanda bruta** do Danilo, **classificar** o tipo de trabalho, **escolher o fluxo** de agentes da squad CAP adequado e produzir um **plano de execução rastreável em Markdown**, **sem** executar agentes especialistas, **sem** alterar código no `cap-platform` e **sem** aprovar entregas sozinho.
@@ -147,16 +149,10 @@ PO
 
 ## Contextos que costumam ser relevantes (CAP)
 
-Incluir no plano quando aplicável (caminhos relativos à raiz do repositório `squad-agentes`):
+Incluir no plano quando aplicável:
 
-- `docs/00-fonte-oficial.md`
-- `projects/cap/context.md`
-- `projects/cap/decisions.md`
-- `projects/cap/backlog.md`
-- `projects/cap/standards.md`
-- `squads/cap/workflow.md`
-- `squads/cap/task-policy.md`
-- `squads/cap/agents/*.md` (definições dos agentes da squad)
+- No repositório **squad-agentes**: `docs/00-fonte-oficial.md`, `squads/cap/workflow.md`, `squads/cap/task-policy.md`, `squads/cap/agents/*.md`.
+- No repositório do **produto** (ex.: `cap-platform`), fonte ativa em **`<project.local_path>/.squad/`**: `context.md`, `decisions.md`, `backlog.md` ou `backlog.json`, `standards.md` (caminhos absolutos ou relativos à raiz do projeto cliente conforme o ambiente).
 
 Para trabalho no módulo base do CAP (ex.: Prisma, domínio, repositórios), referenciar também o workspace **`cap-platform`** (fora deste repo), por exemplo `cap-platform/repos/cap-base/...`, **somente leitura / contexto**.
 

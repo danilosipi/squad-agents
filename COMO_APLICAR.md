@@ -16,7 +16,7 @@ Projetos/squad-agentes/agents/templates/
 Projetos/squad-agentes/squads/cap/agents/
 Projetos/squad-agentes/squads/cap/workflow.md
 Projetos/squad-agentes/squads/cap/task-policy.md
-Projetos/squad-agentes/projects/cap/backlog.md
+Projetos/cap-platform/.squad/   (memória do CAP no projeto cliente; criar/registar via fluxo atual, não em squad-agentes/projects/)
 Projetos/squad-agentes/runs/cap/001-cap-base-database/
 Projetos/squad-agentes/outputs/cap/001-cap-base-database.md
 ```

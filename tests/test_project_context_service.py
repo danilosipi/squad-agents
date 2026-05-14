@@ -85,6 +85,33 @@ def test_minimum_context_conteudo_curto(ctx_env: Path) -> None:
     assert "curto" in (err or "").lower()
 
 
+def test_build_squad_run_context_bundle_usa_local_dot_squad(ctx_env: Path) -> None:
+    repo = ctx_env / "squad_repo_bundle"
+    (repo / "docs").mkdir(parents=True)
+    (repo / "squads" / "cap").mkdir(parents=True)
+    (repo / "docs" / "00-fonte-oficial.md").write_text("# fonte\n", encoding="utf-8")
+    (repo / "docs" / "01-organizacao-projetos-prioritarios.md").write_text("# org\n", encoding="utf-8")
+    (repo / "squads" / "cap" / "workflow.md").write_text("# workflow\n", encoding="utf-8")
+    (repo / "squads" / "cap" / "task-policy.md").write_text("# policy\n", encoding="utf-8")
+
+    row = project_service.create_project("Bundle Ctx")
+    slug = row["slug"]
+    root = Path(row["local_path"])
+    squad = root / ".squad"
+    squad.mkdir(parents=True, exist_ok=True)
+    (squad / "context.md").write_text(
+        "# Contexto\n\n" + ("Conteúdo no disco do projeto cadastrado. " * 5) + "\n",
+        encoding="utf-8",
+    )
+    (squad / "decisions.md").write_text("# Decisões\n", encoding="utf-8")
+    (squad / "backlog.json").write_text('{"version": 1}\n', encoding="utf-8")
+
+    bundle = project_context_service.build_squad_run_context_bundle(slug, repo_root=repo)
+    assert "Conteúdo no disco do projeto cadastrado" in bundle["contexto CAP"]
+    assert "workflow" in bundle["workflow da squad CAP"].lower()
+    assert not (repo / "projects" / "cap" / "context.md").exists()
+
+
 def test_build_markdown_e_input(ctx_env: Path) -> None:
     row = project_service.create_project("Epsilon Ctx")
     slug = row["slug"]

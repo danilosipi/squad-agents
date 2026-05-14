@@ -63,7 +63,7 @@ Para apenas **estruturar** o próximo run em Markdown de input via modelo (JSON)
 
 ## Próximos passos futuros (sugestões)
 
-- Suportar outros `projects/` com bundles de contexto configuráveis.
+- Suportar outros projetos com `.squad/` em cada `local_path` registado (bundles de contexto configuráveis).
 - Opção de encadear automaticamente, após o JSON, uma execução `--agent meta-orchestrator` sobre o `input.md` gerado (hoje é um passo manual sugerido).
 - Atalhos para `--write-files` / `--validate-existing` com confirmação explícita no terminal.
 - Testes automatizados com subprocess mockado ou fixtures de entrada/saída.

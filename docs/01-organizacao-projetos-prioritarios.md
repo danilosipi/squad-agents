@@ -180,12 +180,7 @@ squad-agentes/
 ├── docs/
 │   └── 00-fonte-oficial.md
 │
-├── projects/
-│   └── cap/
-│       ├── context.md
-│       ├── backlog.md
-│       ├── decisions.md
-│       └── standards.md
+├── (memória por projeto: <repo-do-cliente>/.squad/ — fora do squad-agentes)
 │
 ├── outputs/
 │   └── cap/

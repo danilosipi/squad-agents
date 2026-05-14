@@ -45,7 +45,7 @@ Camadas: **domain** (sem Prisma) → **application** (sem Prisma) ← **infrastr
 | Seed | `repos/cap-base/src/infrastructure/seed/` |
 | Evidências por fase | `runs/cap/005-real-file-creation/cap-base-mvp-evidence-matrix.md` |
 | Checklist | `runs/cap/005-real-file-creation/cap-base-mvp-final-checklist.md` |
-| Decisões CAP | `projects/cap/decisions.md` (incl. DEC-014–DEC-020) |
+| Decisões CAP | `<local_path_do_cap>/.squad/decisions.md` (ex.: `cap-platform/.squad/`; incl. DEC-014–DEC-020) |
 
 ---
 
@@ -108,7 +108,7 @@ Documentação e scripts em `docs/08-migrations-cap-base.md`; **primeira migrati
 
 ## Decisões registradas
 
-`projects/cap/decisions.md`: DEC-001 … DEC-019 e **DEC-020** (fechamento MVP com ressalvas).
+No repositório do CAP, o ficheiro `.squad/decisions.md` (caminho indicado na tabela acima) contém DEC-001 … DEC-019 e **DEC-020** (fechamento MVP com ressalvas).
 
 ---
 

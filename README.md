@@ -12,12 +12,14 @@ Evoluir para uma plataforma/orquestrador capaz de criar e operar squads especial
 
 ## Regra de separação
 
+O **squad-agentes** é o **orquestrador**: repositório com squads, agentes, scripts, `runs/`, `outputs/` e documentação de método. Cada **projeto cliente** (por exemplo o CAP em `cap-platform`) guarda a **memória operativa** da squad na pasta **`<local_path>/.squad/`** (por exemplo `context.md`, `standards.md`, `decisions.md`, `backlog.json` ou `backlog.md`) — fora do `squad-agentes`, junto ao código do produto.
+
 ```text
 squad-agentes
-→ agentes, contexto, backlog, decisões, runs, outputs, validações e evidências.
+→ orquestrador: squads, agentes, runs, outputs, validações e evidências versionadas aqui.
 
-cap-platform
-→ código real do produto CAP.
+cap-platform (raiz do repositório do produto)
+→ código real do CAP; fonte ativa de contexto/backlog/decisões em cap-platform/.squad/
 ```
 
 ## Fluxo atual da squad CAP
@@ -35,14 +37,16 @@ Danilo → PO → Arquiteto → Dev → Validação determinística → Reviewer
 ## Pastas principais
 
 ```text
-docs/                 Fonte oficial e decisões de alto nível
+docs/                 Fonte oficial e decisões de alto nível do método (neste repositório)
 agents/templates/     Templates genéricos de agentes
 squads/cap/agents/    Agentes especializados da squad CAP: po.md, architect.md, dev-base.md, reviewer.md, qa.md
-projects/cap/         Contexto, backlog, decisões e padrões do CAP
+<cap-platform>/.squad/  Memória do CAP no disco do projeto (contexto, backlog, decisões, padrões) — não fica em squad-agentes/projects/
 runs/cap/             Histórico detalhado de execuções
 outputs/cap/          Saídas consolidadas
 scripts/              Orquestrador e utilitários
 ```
+
+Nota: a árvore antiga `projects/<slug>/` neste repositório é **legado**; não deve ser tratada como fonte ativa de contexto.
 
 
 # ROADMAP - AGENTS SQUADS

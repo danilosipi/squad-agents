@@ -437,3 +437,74 @@ def build_input_with_project_context(*, demand_header: str, user_message: str, p
         "---\n\n"
         f"{body}\n"
     )
+
+
+def build_squad_run_context_bundle(
+    project_slug: str,
+    *,
+    repo_root: Path | None = None,
+) -> dict[str, str]:
+    """
+    Textos para o prompt da squad CAP nos scripts (`run_squad.py`, `prepare_run.py`).
+
+    Combina documentação fixa do repositório com ficheiros em `<local_path>/.squad/`
+    resolvidos via SQLite (`get_project_context_paths`).
+
+    Chaves e ordem são estáveis (dict ordenado) para o mesmo formato que o CLI já usava.
+    """
+    root = (repo_root or get_repo_root()).resolve()
+    base = get_project_context_paths(project_slug)
+    if not base.get("ok"):
+        raise ValueError(
+            f"Não foi possível resolver o projeto {project_slug!r} no cadastro: {base.get('error')}"
+        )
+    squad = Path(base["local_path_resolved"]) / ".squad"
+
+    def slurp_file(path: Path, *, label: str, required: bool) -> str:
+        if not path.is_file():
+            if required:
+                raise ValueError(f"Arquivo de {label} não encontrado: {path}")
+            return f"_(Arquivo opcional ausente: `{path}`.)_\n"
+        try:
+            return path.read_text(encoding="utf-8")
+        except OSError as exc:
+            raise ValueError(f"Não foi possível ler {label} ({path}): {exc}") from exc
+
+    out: dict[str, str] = {}
+
+    out["fonte oficial"] = slurp_file(
+        root / "docs" / "00-fonte-oficial.md",
+        label="fonte oficial",
+        required=True,
+    )
+    out["organização dos projetos prioritários"] = slurp_file(
+        root / "docs" / "01-organizacao-projetos-prioritarios.md",
+        label="organização dos projetos prioritários",
+        required=True,
+    )
+    out["contexto CAP"] = slurp_file(squad / "context.md", label="contexto CAP", required=True)
+    out["standards CAP"] = slurp_file(squad / "standards.md", label="standards CAP", required=False)
+    out["decisions CAP"] = slurp_file(squad / "decisions.md", label="decisions CAP", required=False)
+
+    bl_json = squad / "backlog.json"
+    bl_md = squad / "backlog.md"
+    if bl_json.is_file():
+        out["backlog CAP"] = slurp_file(bl_json, label="backlog CAP", required=False)
+    elif bl_md.is_file():
+        out["backlog CAP"] = slurp_file(bl_md, label="backlog CAP", required=False)
+    else:
+        out["backlog CAP"] = (
+            f"_(Nenhum ficheiro `backlog.json` nem `backlog.md` em `{squad}`.)_\n"
+        )
+
+    out["workflow da squad CAP"] = slurp_file(
+        root / "squads" / "cap" / "workflow.md",
+        label="workflow da squad CAP",
+        required=True,
+    )
+    out["task-policy da squad CAP"] = slurp_file(
+        root / "squads" / "cap" / "task-policy.md",
+        label="task-policy da squad CAP",
+        required=True,
+    )
+    return out
