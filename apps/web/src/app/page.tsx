@@ -498,6 +498,7 @@ export default function HomePage() {
             display: "flex",
             flexDirection: "column",
             minWidth: 0,
+            minHeight: 0,
             position: "relative",
           }}
         >
@@ -554,25 +555,31 @@ export default function HomePage() {
           ) : (
             <>
               {!selectedSlug && (
-                <div style={{ flex: 1, padding: 32, color: "var(--muted)" }}>
+                <div style={{ flex: 1, minHeight: 0, padding: 32, color: "var(--muted)" }}>
                   {loading ? "Carregando projetos…" : "Selecione um projeto na barra à esquerda."}
                 </div>
               )}
               {selectedSlug && !selectedChatId && (
-                <div style={{ flex: 1, padding: 32, color: "var(--muted)" }}>
+                <div style={{ flex: 1, minHeight: 0, padding: 32, color: "var(--muted)" }}>
                   Selecione um chat ou crie um novo.
                 </div>
               )}
               {selectedSlug && selectedChatId && (
-                <>
-                  <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-                    <ChatWindow
-                      title={headerTitle}
-                      messages={messages}
-                      loading={messagesLoading}
-                      attachments={chatAttachments}
-                    />
-                  </div>
+                <div
+                  style={{
+                    flex: 1,
+                    minHeight: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "hidden",
+                  }}
+                >
+                  <ChatWindow
+                    title={headerTitle}
+                    messages={messages}
+                    loading={messagesLoading}
+                    attachments={chatAttachments}
+                  />
                   {selectedSlug === "cap" &&
                     !USE_FAKE_ASSISTANT &&
                     pendingRun &&
@@ -581,6 +588,7 @@ export default function HomePage() {
                       pendingRun.status === "meta_completed") && (
                       <div
                         style={{
+                          flexShrink: 0,
                           padding: "10px 16px",
                           borderTop: "1px solid var(--border)",
                           display: "flex",
@@ -614,6 +622,7 @@ export default function HomePage() {
                   {bootstrapStatus?.ok && bootstrapStatus.needs_bootstrap && !USE_FAKE_ASSISTANT && (
                     <div
                       style={{
+                        flexShrink: 0,
                         padding: "10px 16px",
                         borderTop: "1px solid var(--border)",
                         background: "rgba(60, 120, 90, 0.1)",
@@ -628,6 +637,7 @@ export default function HomePage() {
                   )}
                   <div
                     style={{
+                      flexShrink: 0,
                       padding: "8px 16px",
                       borderTop: "1px solid var(--border)",
                       display: "flex",
@@ -681,7 +691,7 @@ export default function HomePage() {
                     onAttachImage={(f) => void onAttachImage(f)}
                     imageUploadBusy={imageUploading}
                   />
-                </>
+                </div>
               )}
             </>
           )}

@@ -24,13 +24,11 @@ export function MessageInput({ onSend, disabled, onAttachImage, imageUploadBusy 
   return (
     <div
       style={{
-        position: "sticky",
-        bottom: 0,
-        left: 0,
-        right: 0,
+        flexShrink: 0,
         padding: "12px 16px 16px",
         borderTop: "1px solid var(--border)",
-        background: "linear-gradient(to top, var(--bg) 80%, transparent)",
+        background: "var(--bg)",
+        minWidth: 0,
       }}
     >
       <div
@@ -40,6 +38,7 @@ export function MessageInput({ onSend, disabled, onAttachImage, imageUploadBusy 
           display: "flex",
           gap: 10,
           alignItems: "flex-end",
+          minWidth: 0,
         }}
       >
         <input

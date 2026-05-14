@@ -13,6 +13,7 @@ export function ChatWindow({ title, messages, loading, attachments }: Props) {
     <div
       style={{
         flex: 1,
+        minHeight: 0,
         display: "flex",
         flexDirection: "column",
         minWidth: 0,
@@ -21,6 +22,7 @@ export function ChatWindow({ title, messages, loading, attachments }: Props) {
     >
       <header
         style={{
+          flexShrink: 0,
           padding: "12px 20px",
           borderBottom: "1px solid var(--border)",
           fontWeight: 600,
@@ -32,6 +34,7 @@ export function ChatWindow({ title, messages, loading, attachments }: Props) {
       {attachments && attachments.length > 0 ? (
         <div
           style={{
+            flexShrink: 0,
             padding: "8px 16px",
             borderBottom: "1px solid var(--border)",
             display: "flex",
@@ -82,8 +85,10 @@ export function ChatWindow({ title, messages, loading, attachments }: Props) {
       <div
         style={{
           flex: 1,
+          minHeight: 0,
           overflowY: "auto",
-          padding: "20px 16px 120px",
+          overflowX: "hidden",
+          padding: "20px 16px",
           display: "flex",
           flexDirection: "column",
           gap: 12,
