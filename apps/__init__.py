@@ -1,0 +1,1 @@
+"""Aplicações (API local, etc.)."""

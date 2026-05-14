@@ -44,6 +44,13 @@ runs/**/file-write-report.md
 runs/**/schema-validation-report.md
 runs/**/prisma-validation-report.md
 runs/**/*report.md
+!runs/squad-agentes/**/report.md
+
+# SQLite local (squad-agentes plataforma) — data/
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/*.db-journal
 
 # Optional: keep manually curated run inputs/manifests
 !runs/**/input.md
