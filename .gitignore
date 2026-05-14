@@ -1,0 +1,84 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+ENV/
+pip-wheel-metadata/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Node / package managers
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Local outputs / generated runtime files
+outputs/
+*.log
+
+# Keep runs structure, but ignore generated run outputs by default
+runs/**/final.md
+runs/**/*-output.md
+runs/**/file-write-report.md
+runs/**/schema-validation-report.md
+runs/**/prisma-validation-report.md
+runs/**/*report.md
+
+# Optional: keep manually curated run inputs/manifests
+!runs/**/input.md
+!runs/**/files.manifest.json
+!runs/**/schema-for-manifest.prisma
+
+# CAP generated/local artifacts inside squad-agentes, if present
+repos/**/node_modules/
+repos/**/dist/
+repos/**/build/
+repos/**/.env
+repos/**/.env.*
+!repos/**/.env.example
+repos/**/coverage/
+repos/**/.turbo/
+repos/**/.next/
+repos/**/.cache/
+
+# Prisma generated artifacts / local DBs
+**/generated/
+**/*.db
+**/*.db-journal
+**/*.sqlite
+**/*.sqlite3
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
