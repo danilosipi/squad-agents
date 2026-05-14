@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -46,9 +48,32 @@ class MetaOrchestratorMessageResponse(BaseModel):
     status: str
     context_loaded: bool = False
     context_evidence_path: str | None = None
+    mode: str = "meta_orchestrator"
+    bootstrap_status: dict[str, Any] | None = None
+
+
+class RenameChatRequest(BaseModel):
+    title: str = Field(..., min_length=1)
+
+
+class SavePromptRequest(BaseModel):
+    title_slug: str = Field(default="prompt", min_length=1)
+    content: str = Field(..., min_length=1)
 
 
 class PendingSquadRunResponse(BaseModel):
     run_id: str
     run_path: str
     status: str
+
+
+class ChatAttachmentResponse(BaseModel):
+    id: int
+    chat_id: int
+    message_id: int | None = None
+    project_slug: str
+    file_name: str
+    file_path: str
+    mime_type: str
+    size_bytes: int
+    created_at: str

@@ -113,6 +113,46 @@ def list_messages(chat_id: int) -> list[dict[str, Any]]:
         conn.close()
 
 
+def update_chat_title(chat_id: int, title: str) -> dict[str, Any]:
+    init_database()
+    t = (title or "").strip()
+    if not t:
+        raise ValueError("Título vazio.")
+    now = _utc_now_iso()
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "UPDATE squad_chats SET title = ?, updated_at = ? WHERE id = ?",
+            (t, now, chat_id),
+        )
+        conn.commit()
+        if cur.rowcount == 0:
+            raise ValueError(f"Chat não encontrado: id={chat_id}")
+        row = conn.execute("SELECT * FROM squad_chats WHERE id = ?", (chat_id,)).fetchone()
+        assert row is not None
+        return _row_to_dict(row)
+    finally:
+        conn.close()
+
+
+def delete_chat(chat_id: int) -> None:
+    from core.chats import chat_attachment_service
+
+    init_database()
+    chat_attachment_service.delete_attachment_files_for_chat(chat_id)
+    conn = get_connection()
+    try:
+        row = conn.execute("SELECT id FROM squad_chats WHERE id = ?", (chat_id,)).fetchone()
+        if not row:
+            raise ValueError(f"Chat não encontrado: id={chat_id}")
+        conn.execute("UPDATE squad_runs SET chat_id = NULL WHERE chat_id = ?", (chat_id,))
+        conn.execute("DELETE FROM squad_messages WHERE chat_id = ?", (chat_id,))
+        conn.execute("DELETE FROM squad_chats WHERE id = ?", (chat_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def add_message(chat_id: int, role: str, content: str) -> dict[str, Any]:
     init_database()
     rnorm = (role or "").strip().lower()

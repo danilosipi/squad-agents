@@ -4,15 +4,65 @@ from __future__ import annotations
 
 import os
 
+from typing import NoReturn
+
 from fastapi import APIRouter, Body, HTTPException, status
 
-from apps.api.schemas.runs import ExecuteSquadRequest, ExecuteSquadResponse
+from apps.api.schemas.runs import (
+    ExecuteBoardRunResponse,
+    ExecuteSquadRequest,
+    ExecuteSquadResponse,
+    RunArtifactsResponse,
+)
 from core.chats import chat_service
-from core.orchestration import squad_full_run_service
+from core.orchestration import board_run_execute_service, squad_full_run_service
 from core.projects import project_context_service
+from core.runs import run_artifacts_service
 from core import squad_runs
 
 router = APIRouter()
+
+
+@router.get("/{run_id}/artifacts", response_model=RunArtifactsResponse)
+def get_run_artifacts(run_id: str) -> dict:
+    """Devolve conteúdos seguros de `input.md`, `final.md` e `execution.log` da run."""
+    rid = (run_id or "").strip()
+    if not rid:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="run_id inválido.")
+    try:
+        return run_artifacts_service.get_run_artifacts(rid)
+    except ValueError as e:
+        msg = str(e)
+        if "não encontrado" in msg:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg) from e
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg) from e
+
+
+def _raise_board_execute_value_error(exc: ValueError) -> NoReturn:
+    msg = str(exc)
+    if "Run não encontrado" in msg:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg) from exc
+    if "já foi concluído" in msg or "já está em execução" in msg:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg) from exc
+    if "OPENAI_API_KEY" in msg:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=msg) from exc
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg) from exc
+
+
+@router.post(
+    "/{run_id}/execute-board-run",
+    response_model=ExecuteBoardRunResponse,
+    status_code=status.HTTP_200_OK,
+)
+def execute_board_run(run_id: str) -> dict:
+    """Executa squad completa para run `board-*` preparada no Board (sem chat_id)."""
+    rid = (run_id or "").strip()
+    if not rid:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="run_id inválido.")
+    try:
+        return board_run_execute_service.execute_prepared_board_run(rid)
+    except ValueError as e:
+        _raise_board_execute_value_error(e)
 
 
 def _final_path_posix(project_slug: str, run_id: str) -> str:

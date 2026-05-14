@@ -75,16 +75,25 @@ def test_meta_endpoint_contexto_minimo_insuficiente(
         "/api/chats/messages/with-meta-orchestrator",
         json={"chat_id": cid, "content": "demanda"},
     )
-    assert r.status_code == 400
-    detail = r.json().get("detail", "")
-    assert "contexto" in detail.lower() or ".squad" in detail
+    assert r.status_code == 201
+    body = r.json()
+    assert body["status"] == "bootstrap"
+    assert body["mode"] == "bootstrap_onboarding"
 
     r_msgs = client.get(f"/api/chats/{cid}/messages")
-    assert r_msgs.json() == []
+    msgs = r_msgs.json()
+    assert len(msgs) == 2
+    assert msgs[0]["role"] == "user"
+    assert msgs[1]["role"] == "assistant"
 
 
 def test_meta_endpoint_projeto_nao_cap(client: TestClient) -> None:
     assert client.post("/api/projects", json={"name": "Outro"}).status_code == 201
+    lp = Path(client.get("/api/projects/outro").json()["local_path"])
+    (lp / ".squad" / "context.md").write_text(
+        "# Contexto\n\n" + ("Objetivo e restrições para pytest. " * 5) + "\n",
+        encoding="utf-8",
+    )
     r_chat = client.post(
         "/api/chats",
         json={"project_slug": "outro", "title": "X"},
@@ -192,6 +201,7 @@ def test_meta_endpoint_sucesso_mock(
     assert r.status_code == 201
     body = r.json()
     assert body["status"] == "success"
+    assert body.get("mode") == "meta_orchestrator"
     assert body["run_id"] == "web-ok1"
     assert body["run_path"] == "runs/cap/web-ok1"
     assert body.get("context_loaded") is True

@@ -5,15 +5,25 @@ type Props = {
   selectedChatId: number | null;
   onSelect: (id: number) => void;
   onNewChat: () => void;
+  onRenameChat?: (id: number) => void;
+  onDeleteChat?: (id: number) => void;
   disabled?: boolean;
 };
 
-export function ChatList({ chats, selectedChatId, onSelect, onNewChat, disabled }: Props) {
+export function ChatList({
+  chats,
+  selectedChatId,
+  onSelect,
+  onNewChat,
+  onRenameChat,
+  onDeleteChat,
+  disabled,
+}: Props) {
   return (
     <div
       style={{
-        width: 220,
-        minWidth: 220,
+        width: 240,
+        minWidth: 240,
         background: "var(--sidebar)",
         borderRight: "1px solid var(--border)",
         display: "flex",
@@ -56,23 +66,81 @@ export function ChatList({ chats, selectedChatId, onSelect, onNewChat, disabled 
           {chats.map((c) => {
             const active = c.id === selectedChatId;
             return (
-              <li key={c.id} style={{ marginBottom: 4 }}>
+              <li
+                key={c.id}
+                style={{
+                  marginBottom: 6,
+                  borderRadius: 8,
+                  background: active ? "var(--user-bubble)" : "transparent",
+                  padding: "6px 8px",
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => onSelect(c.id)}
                   style={{
                     width: "100%",
                     textAlign: "left",
-                    padding: "8px 10px",
-                    borderRadius: 8,
+                    padding: "4px 2px",
+                    borderRadius: 6,
                     border: "none",
-                    background: active ? "var(--user-bubble)" : "transparent",
+                    background: "transparent",
                     color: "var(--text)",
                     fontSize: 13,
+                    cursor: "pointer",
                   }}
                 >
                   {c.title}
                 </button>
+                {(onRenameChat || onDeleteChat) && (
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 6,
+                      marginTop: 4,
+                      paddingLeft: 2,
+                    }}
+                  >
+                    {onRenameChat && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRenameChat(c.id);
+                        }}
+                        style={{
+                          fontSize: 11,
+                          border: "none",
+                          background: "transparent",
+                          color: "var(--muted)",
+                          cursor: "pointer",
+                          padding: 0,
+                        }}
+                      >
+                        Renomear
+                      </button>
+                    )}
+                    {onDeleteChat && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteChat(c.id);
+                        }}
+                        style={{
+                          fontSize: 11,
+                          border: "none",
+                          background: "transparent",
+                          color: "var(--danger)",
+                          cursor: "pointer",
+                          padding: 0,
+                        }}
+                      >
+                        Eliminar
+                      </button>
+                    )}
+                  </div>
+                )}
               </li>
             );
           })}

@@ -4,20 +4,24 @@ from __future__ import annotations
 
 import os
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi.responses import FileResponse
 
 from apps.api.schemas.chats import (
     AddMessageRequest,
+    ChatAttachmentResponse,
     ChatResponse,
     CreateChatRequest,
     MessageResponse,
     MetaOrchestratorMessageRequest,
     MetaOrchestratorMessageResponse,
     PendingSquadRunResponse,
+    RenameChatRequest,
+    SavePromptRequest,
 )
-from core.chats import chat_service
-from core.orchestration import meta_orchestrator_service
-from core.projects import project_context_service
+from core.chats import chat_attachment_service, chat_service
+from core.orchestration import bootstrap_chat_service, meta_orchestrator_service
+from core.projects import project_bootstrap_service, project_context_service, project_service
 from core import squad_runs
 
 router = APIRouter()
@@ -29,6 +33,61 @@ _HUMAN_SQUAD_APPROVAL_NOTE = (
     "**Executar squad**.\n\n"
     "_Nenhuma execução adicional ocorre sem essa confirmação explícita._"
 )
+
+
+@router.get("/attachments/{attachment_id}")
+def download_chat_attachment(attachment_id: int) -> FileResponse:
+    """Devolve o ficheiro do anexo (preview / descarga)."""
+    row = chat_attachment_service.get_attachment_row(attachment_id)
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Anexo não encontrado.")
+    try:
+        path = chat_attachment_service.resolve_attachment_path(row)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    if not path.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ficheiro do anexo não está disponível no disco.",
+        )
+    return FileResponse(
+        str(path),
+        media_type=str(row.get("mime_type") or "application/octet-stream"),
+        filename=str(row.get("file_name") or path.name),
+    )
+
+
+@router.get("/{chat_id}/attachments", response_model=list[ChatAttachmentResponse])
+def list_chat_attachments(chat_id: int) -> list[dict]:
+    try:
+        return chat_attachment_service.list_attachments(chat_id)
+    except ValueError as e:
+        msg = str(e)
+        code = (
+            status.HTTP_404_NOT_FOUND if "não encontrado" in msg else status.HTTP_400_BAD_REQUEST
+        )
+        raise HTTPException(status_code=code, detail=msg) from e
+
+
+@router.post(
+    "/{chat_id}/attachments",
+    response_model=ChatAttachmentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def upload_chat_attachment(chat_id: int, file: UploadFile = File(...)) -> dict:
+    try:
+        return chat_attachment_service.save_image_attachment(
+            chat_id=chat_id,
+            original_filename=file.filename or "image",
+            file_obj=file.file,
+            content_type=file.content_type,
+        )
+    except ValueError as e:
+        msg = str(e)
+        code = (
+            status.HTTP_404_NOT_FOUND if "não encontrado" in msg else status.HTTP_400_BAD_REQUEST
+        )
+        raise HTTPException(status_code=code, detail=msg) from e
 
 
 @router.get("/project/{project_slug}", response_model=list[ChatResponse])
@@ -45,6 +104,40 @@ def create_chat(body: CreateChatRequest) -> dict:
         return chat_service.create_chat(body.project_slug, body.title)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+
+@router.patch("/{chat_id}", response_model=ChatResponse)
+def rename_chat(chat_id: int, body: RenameChatRequest) -> dict:
+    try:
+        return chat_service.update_chat_title(chat_id, body.title)
+    except ValueError as e:
+        msg = str(e)
+        code = status.HTTP_404_NOT_FOUND if "não encontrado" in msg else status.HTTP_400_BAD_REQUEST
+        raise HTTPException(status_code=code, detail=msg) from e
+
+
+@router.delete("/{chat_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_chat(chat_id: int) -> None:
+    try:
+        chat_service.delete_chat(chat_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+
+@router.post("/{chat_id}/save-prompt", status_code=status.HTTP_201_CREATED)
+def save_important_prompt(chat_id: int, body: SavePromptRequest) -> dict:
+    row = chat_service.get_chat_with_project(chat_id)
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat não encontrado.")
+    slug = (row.get("project_slug") or "").strip().lower()
+    try:
+        return project_bootstrap_service.save_important_prompt_file(
+            slug,
+            title_slug=body.title_slug,
+            body=body.content,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
 
 @router.get("/{chat_id}/messages", response_model=list[MessageResponse])
@@ -95,6 +188,47 @@ def add_message_with_meta_orchestrator(body: MetaOrchestratorMessageRequest) -> 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat não encontrado.")
 
     slug = (chat_row.get("project_slug") or "").strip().lower()
+    bst = project_bootstrap_service.project_bootstrap_status(slug)
+    if not bst.get("ok"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=bst.get("block_reason") or "Projeto inválido para onboarding.",
+        )
+
+    if bst.get("needs_bootstrap"):
+        try:
+            user_row = chat_service.add_message(body.chat_id, "user", body.content)
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+        proj = project_service.get_project_by_slug(slug) or {}
+        msgs = chat_service.list_messages(body.chat_id)
+        assistant_text = bootstrap_chat_service.generate_bootstrap_assistant_reply(
+            project_name=str(proj.get("name") or slug),
+            project_slug=slug,
+            local_path=str(proj.get("local_path") or bst.get("local_path_resolved") or ""),
+            messages=msgs,
+            latest_user_message=body.content,
+            chat_id=body.chat_id,
+        )
+        try:
+            assistant_row = chat_service.add_message(body.chat_id, "assistant", assistant_text)
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+
+        fresh = project_bootstrap_service.project_bootstrap_status(slug)
+        return {
+            "user_message": user_row,
+            "assistant_message": assistant_row,
+            "run_id": "",
+            "run_path": "",
+            "status": "bootstrap",
+            "context_loaded": False,
+            "context_evidence_path": None,
+            "mode": "bootstrap_onboarding",
+            "bootstrap_status": fresh,
+        }
+
     if slug != "cap":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -161,4 +295,6 @@ def add_message_with_meta_orchestrator(body: MetaOrchestratorMessageRequest) -> 
         "status": "success" if orch.ok else "failed",
         "context_loaded": bool(orch.context_loaded),
         "context_evidence_path": orch.context_evidence_path,
+        "mode": "meta_orchestrator",
+        "bootstrap_status": None,
     }

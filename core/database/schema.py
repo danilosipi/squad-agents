@@ -88,6 +88,19 @@ CREATE TABLE IF NOT EXISTS squad_runs (
     FOREIGN KEY(project_id) REFERENCES squad_projects(id),
     FOREIGN KEY(task_id) REFERENCES squad_tasks(id)
 );
+
+CREATE TABLE IF NOT EXISTS squad_chat_attachments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER NOT NULL,
+    message_id INTEGER,
+    project_slug TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    size_bytes INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(chat_id) REFERENCES squad_chats(id) ON DELETE CASCADE
+);
 """
 
 

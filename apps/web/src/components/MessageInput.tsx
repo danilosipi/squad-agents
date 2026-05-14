@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 type Props = {
   onSend: (text: string) => void;
   disabled?: boolean;
+  /** Anexar imagem (png/jpg/webp); envio separado do texto. */
+  onAttachImage?: (file: File) => void;
+  imageUploadBusy?: boolean;
 };
 
-export function MessageInput({ onSend, disabled }: Props) {
+export function MessageInput({ onSend, disabled, onAttachImage, imageUploadBusy }: Props) {
   const [value, setValue] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   function submit() {
     const t = value.trim();
@@ -38,6 +42,39 @@ export function MessageInput({ onSend, disabled }: Props) {
           alignItems: "flex-end",
         }}
       >
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
+          style={{ display: "none" }}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f && onAttachImage) {
+              onAttachImage(f);
+              e.target.value = "";
+            }
+          }}
+        />
+        {onAttachImage ? (
+          <button
+            type="button"
+            title="Anexar imagem"
+            disabled={disabled || imageUploadBusy}
+            onClick={() => fileRef.current?.click()}
+            style={{
+              padding: "12px 14px",
+              borderRadius: 12,
+              border: "1px solid var(--border)",
+              background: "var(--sidebar)",
+              color: "var(--text)",
+              fontWeight: 600,
+              alignSelf: "stretch",
+              minWidth: 44,
+            }}
+          >
+            {imageUploadBusy ? "…" : "📎"}
+          </button>
+        ) : null}
         <textarea
           rows={2}
           value={value}

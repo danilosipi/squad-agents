@@ -19,6 +19,9 @@ STATUS_FAILED = "failed"
 
 _APPROVAL_STATUSES = frozenset({STATUS_META_COMPLETED, STATUS_AWAITING_HUMAN_APPROVAL})
 
+# Runs preparadas pelo Board: reexecução permitida após falha (`failed`).
+BOARD_EXECUTABLE_STATUSES = frozenset({STATUS_CREATED, STATUS_FAILED})
+
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
@@ -139,3 +142,8 @@ def update_squad_run_status(
 def can_execute_full_squad(status: str) -> bool:
     """Indica se o run pode receber execução explícita da squad completa."""
     return (status or "").strip() in _APPROVAL_STATUSES
+
+
+def can_execute_board_run(status: str) -> bool:
+    """Runs `board-*` (sem chat) podem ser executadas a partir de `created` ou após `failed`."""
+    return (status or "").strip() in BOARD_EXECUTABLE_STATUSES

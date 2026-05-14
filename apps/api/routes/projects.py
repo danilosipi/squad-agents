@@ -4,8 +4,16 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, status
 
-from apps.api.schemas.projects import CreateProjectRequest, ProjectResponse, RegisterProjectRequest
-from core.projects import project_service
+from apps.api.schemas.projects import (
+    CreateProjectRequest,
+    ProjectBootstrapEnsureResponse,
+    ProjectBootstrapStatusResponse,
+    ProjectResponse,
+    RefineContextRequest,
+    RefineContextResponse,
+    RegisterProjectRequest,
+)
+from core.projects import project_bootstrap_service, project_service
 
 router = APIRouter()
 
@@ -13,6 +21,37 @@ router = APIRouter()
 @router.get("", response_model=list[ProjectResponse])
 def list_projects() -> list[dict]:
     return project_service.list_projects()
+
+
+@router.get("/{slug}/bootstrap-status", response_model=ProjectBootstrapStatusResponse)
+def get_bootstrap_status(slug: str) -> dict:
+    return project_bootstrap_service.project_bootstrap_status(slug.strip().lower())
+
+
+@router.post("/{slug}/bootstrap", response_model=ProjectBootstrapEnsureResponse, status_code=status.HTTP_201_CREATED)
+def post_project_bootstrap(slug: str) -> dict:
+    try:
+        return project_bootstrap_service.ensure_minimal_squad_artifacts(slug.strip().lower())
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+
+@router.post(
+    "/{slug}/context/refine",
+    response_model=RefineContextResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def post_refine_context(slug: str, body: RefineContextRequest) -> dict:
+    try:
+        return project_bootstrap_service.refine_context_markdown_from_chat(
+            slug.strip().lower(),
+            body.chat_id,
+            overwrite=body.overwrite,
+        )
+    except ValueError as e:
+        msg = str(e)
+        code = status.HTTP_404_NOT_FOUND if "não encontrado" in msg else status.HTTP_400_BAD_REQUEST
+        raise HTTPException(status_code=code, detail=msg) from e
 
 
 @router.get("/{slug}", response_model=ProjectResponse)
